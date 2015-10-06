@@ -1,0 +1,5 @@
+Name: libgfx
+Description: PNG file reading and writing abstraction.
+Version: 0.0.1
+Libs: -L${libdir} -lgfx
+Cflags: -I${includedir}
