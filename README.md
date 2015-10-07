@@ -117,7 +117,7 @@ Please refer to GfxChunk for more details.
 
 ...
 
-libgfx_img img;
+GfxImage img;
 ...
 libgfx_createImage(&img);
 libgfx_createChunk(&img, "bbOX", 4);
