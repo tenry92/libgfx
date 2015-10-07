@@ -38,7 +38,7 @@ Compiling
 ---------
 
 The source code consists of two major files: include/libgfx.h containing the
-definitions for including in your source and src/libgfx.cpp providing the
+definitions for including in your source and src/libgfx.c providing the
 implementation. This library depends on libpng, so make sure it is already
 installed and can be found with `pkg-config`. If needed, edit the Makefile to
 fit your environment.
@@ -54,10 +54,11 @@ Reading PNG File
 ~~~~~~~~
 #include <libgfx.h>
 
-libgfx_image img;
+GfxImage img;
 libgfx_loadGfxFile(&img, "yourfile.png");
 /* now you can check bitDepth and colorFormat
  * and create your texture using img.pixels */
+libgfx_destroyImage(&img);
 ~~~~~~~~
 
 
@@ -67,17 +68,19 @@ Writing PNG File
 ~~~~~~~~
 #include <libgfx.h>
 ...
-libgfx_image img;
+GfxImage img;
 /* Set your image data in img.pixels, img.width and img.height.
  * Optionally give your image a palette and userChunks.
  * And don't to set bitDepth and colorFormat.
  */
-img.pixels = ...;
 img.width = 64;
 img.height=  64;
 img.bitDepth = 8;
 img.colorFormat = GfxFormat_RGBA;
+libgfx_createImage(&image);
+/* write your data into img.pixels here */
 libgfx_writeGfxFile(&img, "yourfile.png");
+libgfx_destroyImage(&img);
 ~~~~~~~~
 
 
@@ -115,14 +118,14 @@ Please refer to GfxChunk for more details.
 ...
 
 libgfx_img img;
-GfxChunk myChunk;
-strcpy(myChunk.name, "bbOX");
-myChunk.data.resize(4);
-myChunk.data[0] = bbox.left;
-myChunk.data[1] = bbox.top;
-myChunk.data[2] = bbox.width;
-myChunk.data[3] = bbox.height;
-img.userChunks.push_back(&myChunk);
+...
+libgfx_createImage(&img);
+libgfx_createChunk(&img, "bbOX", 4);
+GfxChunk *myChunk = img.userChunks[img.nUserChunks - 1];
+myChunk->data[0] = bbox.left;
+myChunk->data[1] = bbox.top;
+myChunk->data[2] = bbox.width;
+myChunk->data[3] = bbox.height;
 ...
 libgfx_writeGfxFile(&img, "test.png");
 

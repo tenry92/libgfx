@@ -8,7 +8,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 
 SHELL := /bin/sh
 
-CXXFLAGS := -std=c++0x `pkg-config --cflags libpng` -Iinclude
+CFLAGS := `pkg-config --cflags libpng` -Iinclude
 
 
 .PHONY: all install doc clean uninstall
@@ -49,7 +49,7 @@ lib/libgfx.a: obj/libgfx.o
 	@mkdir -p lib
 	@ar rvs lib/libgfx.a obj/libgfx.o
 
-obj/libgfx.o: src/libgfx.cpp
+obj/libgfx.o: src/libgfx.c
 	@echo Compiling...
 	@mkdir -p obj
-	@$(CXX) $(CXXFLAGS) -o $@ -c $^
+	@$(CC) $(CFLAGS) -o $@ -c $^

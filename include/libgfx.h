@@ -26,8 +26,12 @@ freely, subject to the following restrictions:
 /** @file */
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
-#include <vector>
 
 
 typedef void (*GfxWriteCb)(const void *ptr, int size, void *user);
@@ -35,7 +39,7 @@ typedef void (*GfxReadCb)(void *ptr, int size, void *user);
 
 
 /** @brief Error codes that can be returned by the libgfx functions. */
-enum GfxError
+typedef enum
 {
   GfxError_None=0,
   GfxError_Unknown,
@@ -43,38 +47,38 @@ enum GfxError
   GfxError_File, /**< @brief Couldn't open specified file for reading or writing */
   GfxError_FileFormat, /**< @brief The specified file format is not supported */
   GfxError_BitDepth
-};
-enum GfxFileFormat
+} GfxError;
+typedef enum
 {
   GfxFormat_Png=1,
   GfxFormat_Gfx
-};
+} GfxFileFormat;
 /** @brief Color format. */
-enum GfxColorFormat
+typedef enum
 {
   GfxFormat_RGB=1,
   GfxFormat_RGBA,
   GfxFormat_Palette
-};
+} GfxColorFormat;
 
 
-struct GfxRGB8
+typedef struct
 {
   uint8_t red;
   uint8_t green;
   uint8_t blue;
-} __attribute__((packed));
+} __attribute__((packed)) GfxRGB8;
 
-struct GfxRGBA8
+typedef struct
 {
   uint8_t red;
   uint8_t green;
   uint8_t blue;
   uint8_t alpha;
-} __attribute__((packed));
+} __attribute__((packed)) GfxRGBA8;
 
 /** @brief Struct for user chunks. */
-struct GfxChunk
+typedef struct
 {
   /** @brief Name of the chunk.
   
@@ -93,12 +97,14 @@ struct GfxChunk
   char name[5];
   
   /** @brief The binary data of the chunk. */
-  std::vector<uint8_t> data;
-};
+  uint8_t *data;
+  
+  size_t size;
+} GfxChunk;
 
 
 /** @brief Structure containing the raw image data. */
-struct libgfx_image
+typedef struct
 {
   GfxFileFormat fileFormat;
   GfxColorFormat colorFormat;
@@ -111,11 +117,12 @@ struct libgfx_image
   For GfxFormat_Palette, it is the number of bytes per color index.
   Shall be 8 (1 byte per pixel) or 16 (2 bytes per pixel).
   
+  @warning Do not modify its value after creating the image.
   */
   int bitDepth;
   
   /** @brief The image data to read or write. */
-  std::vector<uint8_t> pixels;
+  uint8_t *pixels;
   
   /** @brief The colors of the palette.
   
@@ -124,14 +131,35 @@ struct libgfx_image
   
   **Writing**: When writing an image, that shall have a palette, this must
   be filled with any available colors.
-  
   */
-  std::vector<uint8_t> palette;
+  uint8_t *palette;
   
-  int width, height;
+  size_t nColors;
   
-  std::vector<GfxChunk*> userChunks;
-};
+  /** @brief Image width in pixels.
+  
+  @warning Do not modify its value after creating the image.
+  */
+  int width;
+  
+  /** @brief Image height in pixels.
+  
+  @warning Do not modify its value after creating the image.
+  */
+  int height;
+  
+  GfxChunk **userChunks;
+  size_t nUserChunks;
+} GfxImage;
+
+
+int libgfx_createImage(GfxImage *img);
+
+int libgfx_destroyImage(GfxImage *img);
+
+int libgfx_createPalette(GfxImage *img, int nEntries);
+
+int libgfx_createChunk(GfxImage *img, const char *name, size_t size);
 
 
 /** @brief Write a GFX file.
@@ -145,7 +173,7 @@ struct libgfx_image
 @see libgfx_writeGfxFile()
 @see libgfx_loadGfx()
 */
-int libgfx_writeGfx(libgfx_image *img, GfxWriteCb writeFn, void *user=nullptr);
+int libgfx_writeGfx(GfxImage *img, GfxWriteCb writeFn, void *user);
 
 /** @brief Write a GFX file.
 
@@ -157,7 +185,7 @@ int libgfx_writeGfx(libgfx_image *img, GfxWriteCb writeFn, void *user=nullptr);
 @see libgfx_writeGfx()
 @see libgfx_loadGfxFile()
 */
-int libgfx_writeGfxFile(libgfx_image *img, const char *fname);
+int libgfx_writeGfxFile(GfxImage *img, const char *fname);
 
 
 /** @brief Load a GFX file.
@@ -171,7 +199,7 @@ int libgfx_writeGfxFile(libgfx_image *img, const char *fname);
 @see libgfx_loadGfxFile()
 @see libgfx_writeGfx()
 */
-int libgfx_loadGfx(libgfx_image *img, GfxReadCb readFn, void *user=nullptr);
+int libgfx_loadGfx(GfxImage *img, GfxReadCb readFn, void *user);
 
 /** @brief Load a GFX file.
 
@@ -183,14 +211,18 @@ int libgfx_loadGfx(libgfx_image *img, GfxReadCb readFn, void *user=nullptr);
 @see libgfx_loadGfx()
 @see libgfx_writeGfxFile()
 */
-int libgfx_loadGfxFile(libgfx_image *img, const char *fname);
-int libgfx_loadGfxMem(libgfx_image *img, const void *ptr, int size);
+int libgfx_loadGfxFile(GfxImage *img, const char *fname);
+int libgfx_loadGfxMem(GfxImage *img, const void *ptr, int size);
 
 /** @brief Unset user chunks.
 
 This function shall be called after libgfx_loadGfx(), when the user chunks
 are not needed any longer.
 */
-void libgfx_clearChunks(libgfx_image *img);
+void libgfx_clearChunks(GfxImage *img);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
